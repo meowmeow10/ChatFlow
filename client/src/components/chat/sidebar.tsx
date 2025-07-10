@@ -240,9 +240,11 @@ export function Sidebar({
           )}
           <div className="flex-1">
             <h3 className="font-medium text-foreground">{user?.displayName}</h3>
-            <p className="text-sm text-emerald-500 flex items-center">
-              <span className="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span>
-              Online
+            <p className="text-sm flex items-center">
+              <span className={`w-2 h-2 rounded-full mr-2 ${getStatusColor(user?.status || 'offline')}`}></span>
+              <span className={`capitalize ${user?.status === 'online' ? 'text-emerald-500' : user?.status === 'away' ? 'text-amber-500' : 'text-slate-400'}`}>
+                {user?.status || 'Offline'}
+              </span>
             </p>
           </div>
           <div className="flex space-x-2">

@@ -13,6 +13,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -30,12 +37,13 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, updateStatus } = useAuth();
   const { toast } = useToast();
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [soundNotifications, setSoundNotifications] = useState(true);
   const [showOnlineStatus, setShowOnlineStatus] = useState(true);
   const [profilePictureUrl, setProfilePictureUrl] = useState(user?.profilePicture || "");
+  const [userStatus, setUserStatus] = useState(user?.status || "online");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Apply dark mode by default on component mount
@@ -141,6 +149,23 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
     document.documentElement.classList.toggle("dark");
   };
 
+  const handleStatusChange = async (status: string) => {
+    try {
+      await updateStatus(status);
+      setUserStatus(status);
+      toast({
+        title: "Status updated!",
+        description: `Your status has been set to ${status}.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to update status",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
@@ -227,6 +252,35 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                   {...form.register("statusMessage")}
                   className="mt-2"
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="userStatus">Status</Label>
+                <Select value={userStatus} onValueChange={handleStatusChange}>
+                  <SelectTrigger className="mt-2">
+                    <SelectValue placeholder="Select your status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="online">
+                      <div className="flex items-center space-x-2">
+                        <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                        <span>Online</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="away">
+                      <div className="flex items-center space-x-2">
+                        <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
+                        <span>Away</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="offline">
+                      <div className="flex items-center space-x-2">
+                        <span className="w-2 h-2 bg-slate-400 rounded-full"></span>
+                        <span>Offline</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </form>
           </div>

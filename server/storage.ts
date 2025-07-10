@@ -90,6 +90,22 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id));
   }
 
+  // Set user offline
+  async setUserOffline(userId: number) {
+    await db
+      .update(users)
+      .set({ 
+        status: 'offline',
+        lastSeen: new Date() 
+      })
+      .where(eq(users.id, userId));
+  }
+
+  // Get online users
+  async getOnlineUsers() {
+    return await db.select().from(users).where(eq(users.status, 'online'));
+  }
+
   async createRoom(room: InsertRoom, creatorId: number): Promise<Room> {
     const inviteCode = Math.random().toString(36).substring(2, 10);
     const [newRoom] = await db

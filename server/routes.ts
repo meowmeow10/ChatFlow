@@ -116,10 +116,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/auth/logout", authenticateToken, async (req: any, res) => {
     try {
-      await storage.updateUserStatus(req.userId, "offline");
+      await storage.setUserOffline(req.userId);
       res.json({ message: "Logged out successfully" });
     } catch (error) {
       res.status(500).json({ message: "Logout failed" });
+    }
+  });
+
+  // Heartbeat endpoint to maintain online status
+  app.post("/api/user/heartbeat", authenticateToken, async (req: any, res) => {
+    try {
+      await storage.updateUserStatus(req.userId, "online");
+      res.json({ message: "Heartbeat received" });
+    } catch (error) {
+      res.status(500).json({ message: "Heartbeat failed" });
     }
   });
 
@@ -163,6 +173,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to update user" });
+    }
+  });
+
+  // Update user status
+  app.put("/api/user/status", authenticateToken, async (req: any, res) => {
+    try {
+      const { status } = req.body;
+      
+      if (!['online', 'away', 'offline'].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+
+      await storage.updateUserStatus(req.userId, status);
+      
+      const user = await storage.getUser(req.userId);
+      res.json({
+        id: user.id,
+        status: user.status,
+        lastSeen: user.lastSeen,
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update status" });
     }
   });
 

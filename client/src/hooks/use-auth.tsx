@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authService, type User } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
@@ -10,6 +10,7 @@ interface AuthContextType {
   register: (email: string, password: string, displayName: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<User>) => Promise<void>;
+  updateStatus: (status: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,6 +18,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const [isInitialized, setIsInitialized] = useState(false);
+  const heartbeatInterval = useRef<NodeJS.Timeout | null>(null);
 
   const { data: user, isLoading } = useQuery({
     queryKey: ["/api/user/me"],
@@ -71,9 +73,67 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
   });
 
+  const updateStatusMutation = useMutation({
+    mutationFn: async (status: string) => {
+      const response = await apiRequest("PUT", "/api/user/status", { status });
+      return await response.json();
+    },
+    onSuccess: (updatedUser) => {
+      queryClient.setQueryData(["/api/user/me"], (old: any) => ({
+        ...old,
+        status: updatedUser.status,
+        lastSeen: updatedUser.lastSeen,
+      }));
+    },
+  });
+
+  const heartbeatMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/user/heartbeat");
+      return await response.json();
+    },
+  });
+
   useEffect(() => {
     setIsInitialized(true);
   }, []);
+
+  // Start heartbeat when user is authenticated
+  useEffect(() => {
+    if (user && authService.isAuthenticated()) {
+      // Send heartbeat every 30 seconds to maintain online status
+      heartbeatInterval.current = setInterval(() => {
+        heartbeatMutation.mutate();
+      }, 30000);
+
+      // Handle page visibility changes
+      const handleVisibilityChange = () => {
+        if (document.hidden) {
+          updateStatusMutation.mutate("away");
+        } else {
+          updateStatusMutation.mutate("online");
+        }
+      };
+
+      // Handle beforeunload to set offline status
+      const handleBeforeUnload = () => {
+        // Use sendBeacon for reliable offline status update
+        const data = JSON.stringify({ status: "offline" });
+        navigator.sendBeacon("/api/user/status", data);
+      };
+
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      window.addEventListener("beforeunload", handleBeforeUnload);
+
+      return () => {
+        if (heartbeatInterval.current) {
+          clearInterval(heartbeatInterval.current);
+        }
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        window.removeEventListener("beforeunload", handleBeforeUnload);
+      };
+    }
+  }, [user, heartbeatMutation, updateStatusMutation]);
 
   const login = async (email: string, password: string) => {
     await loginMutation.mutateAsync({ email, password });
@@ -91,6 +151,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await updateUserMutation.mutateAsync(updates);
   };
 
+  const updateStatus = async (status: string) => {
+    await updateStatusMutation.mutateAsync(status);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -100,6 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         register,
         logout,
         updateUser,
+        updateStatus,
       }}
     >
       {children}
