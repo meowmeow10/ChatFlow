@@ -59,13 +59,52 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // For this demo, we'll use a data URL
-      // In production, you'd upload to a CDN/storage service
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const dataUrl = e.target?.result as string;
+      // Check file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 2MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create a canvas to resize the image
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        // Resize to max 200x200 while maintaining aspect ratio
+        const maxSize = 200;
+        let { width, height } = img;
+        
+        if (width > height) {
+          if (width > maxSize) {
+            height = (height * maxSize) / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = (width * maxSize) / height;
+            height = maxSize;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        // Convert to data URL with compression
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
         setProfilePictureUrl(dataUrl);
         form.setValue('profilePicture', dataUrl);
+      };
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.src = e.target?.result as string;
       };
       reader.readAsDataURL(file);
     }
