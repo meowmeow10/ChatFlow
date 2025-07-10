@@ -85,7 +85,7 @@ export function Sidebar({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-foreground truncate">{room.name}</p>
-                {room.lastMessage && (
+                {room.lastMessage && room.lastMessage.sender && (
                   <p className="text-sm text-muted-foreground truncate">
                     {room.lastMessage.sender.displayName}: {room.lastMessage.content}
                   </p>
@@ -145,7 +145,7 @@ export function Sidebar({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-foreground truncate">{chat.name}</p>
-                {chat.lastMessage && (
+                {chat.lastMessage && chat.senderName && (
                   <p className="text-sm text-muted-foreground truncate">
                     {chat.senderName}: {chat.lastMessage}
                   </p>
