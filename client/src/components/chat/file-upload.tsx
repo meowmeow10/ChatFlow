@@ -100,7 +100,7 @@ export function FileUpload({ onFileSelect, disabled }: FileUploadProps) {
         type="file"
         onChange={handleFileSelect}
         className="hidden"
-        accept="image/*,application/pdf,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/zip,audio/*,video/*"
+        accept="image/*,image/gif,application/pdf,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/zip,audio/*,video/*"
       />
       
       <Button

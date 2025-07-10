@@ -117,7 +117,12 @@ export async function processFile(file: File): Promise<FileData> {
     throw new Error(validation.error);
   }
 
-  // Compress images for better performance
+  // Skip compression for GIFs to preserve animation
+  if (file.type === 'image/gif') {
+    return await fileToDataUrl(file);
+  }
+
+  // Compress other images for better performance
   if (isImageType(file.type)) {
     return await compressImage(file);
   }

@@ -40,6 +40,12 @@ export function MessageAttachment({
           className="rounded-lg shadow-sm cursor-pointer hover:shadow-md transition-shadow"
           onClick={handleView}
           loading="lazy"
+          style={{
+            // Ensure GIFs play automatically and loop
+            ...(mimeType === 'image/gif' && {
+              imageRendering: 'auto',
+            })
+          }}
         />
         <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
           <span className="truncate">{fileName}</span>
