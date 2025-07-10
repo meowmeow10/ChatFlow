@@ -1,7 +1,9 @@
-import { Link, Cog, Copy } from "lucide-react";
+import { useState } from "react";
+import { Link, Cog, Copy, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRoom, useRoomMembers, useGenerateInvite } from "@/hooks/use-chat";
 import { useToast } from "@/hooks/use-toast";
+import { AddMemberModal } from "@/components/modals/add-member-modal";
 
 interface RoomInfoProps {
   roomId: number;
@@ -12,6 +14,7 @@ export function RoomInfo({ roomId }: RoomInfoProps) {
   const { data: members, isLoading: membersLoading } = useRoomMembers(roomId);
   const generateInviteMutation = useGenerateInvite();
   const { toast } = useToast();
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
 
   const getInitials = (name: string) => {
     return name
@@ -78,6 +81,14 @@ export function RoomInfo({ roomId }: RoomInfoProps) {
         <Button
           variant="ghost"
           className="w-full justify-start"
+          onClick={() => setShowAddMemberModal(true)}
+        >
+          <UserPlus className="w-4 h-4 mr-3 text-primary" />
+          <span>Add Member</span>
+        </Button>
+        <Button
+          variant="ghost"
+          className="w-full justify-start"
           onClick={handleGenerateInvite}
           disabled={generateInviteMutation.isPending}
         >
@@ -141,6 +152,13 @@ export function RoomInfo({ roomId }: RoomInfoProps) {
           )}
         </div>
       </div>
+
+      <AddMemberModal
+        open={showAddMemberModal}
+        onOpenChange={setShowAddMemberModal}
+        roomId={roomId}
+        roomName={room.name}
+      />
     </div>
   );
 }

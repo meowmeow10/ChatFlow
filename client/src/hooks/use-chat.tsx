@@ -188,6 +188,21 @@ export function useGenerateInvite() {
   });
 }
 
+export function useAddRoomMember() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ roomId, email }: { roomId: number; email: string }) => {
+      const response = await apiRequest("POST", `/api/rooms/${roomId}/members`, { email });
+      return await response.json();
+    },
+    onSuccess: (_, { roomId }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rooms", roomId, "members"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/rooms"] });
+    },
+  });
+}
+
 export function useSendFriendRequest() {
   const queryClient = useQueryClient();
 

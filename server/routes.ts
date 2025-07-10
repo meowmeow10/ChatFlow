@@ -281,6 +281,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/rooms/:id/members", authenticateToken, async (req: any, res) => {
+    try {
+      const roomId = parseInt(req.params.id);
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      // Check if user is a member (and later we can check if admin)
+      const isMember = await storage.isRoomMember(roomId, req.userId);
+      if (!isMember) {
+        return res.status(403).json({ message: "Not a member of this room" });
+      }
+
+      // Find user by email
+      const userToAdd = await storage.getUserByEmail(email);
+      if (!userToAdd) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check if user is already a member
+      const isAlreadyMember = await storage.isRoomMember(roomId, userToAdd.id);
+      if (isAlreadyMember) {
+        return res.status(400).json({ message: "User is already a member" });
+      }
+
+      // Add user to room
+      await storage.addRoomMember(roomId, userToAdd.id);
+      res.json({ message: "User added to room successfully", user: { id: userToAdd.id, displayName: userToAdd.displayName, email: userToAdd.email } });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to add member" });
+    }
+  });
+
   // Message routes
   app.get("/api/rooms/:id/messages", authenticateToken, async (req: any, res) => {
     try {
