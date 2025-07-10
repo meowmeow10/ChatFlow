@@ -40,6 +40,10 @@ export const messages = pgTable("messages", {
   roomId: integer("room_id").references(() => rooms.id),
   recipientId: integer("recipient_id").references(() => users.id), // for direct messages
   messageType: text("message_type").notNull().default("text"), // text, image, file
+  fileName: text("file_name"), // original filename for attachments
+  fileUrl: text("file_url"), // URL or data URL for file/image
+  fileSize: integer("file_size"), // file size in bytes
+  mimeType: text("mime_type"), // MIME type of the file
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

@@ -5,7 +5,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { useRoom, useRoomMessages, useDirectMessages, useSendMessage, useSendDirectMessage } from "@/hooks/use-chat";
 import { MessageBubble } from "./message-bubble";
+import { FileUpload } from "./file-upload";
 import type { Message } from "@/hooks/use-chat";
+import type { FileData } from "@/lib/fileUtils";
 
 interface ChatAreaProps {
   activeRoomId: number | null;
@@ -62,6 +64,36 @@ export function ChatArea({
       setMessageContent("");
     } catch (error) {
       console.error("Failed to send message:", error);
+    }
+  };
+
+  const handleFileSelect = async (fileData: FileData) => {
+    try {
+      const messageType = fileData.mimeType.startsWith('image/') ? 'image' : 'file';
+      
+      if (activeRoomId) {
+        await sendMessageMutation.mutateAsync({
+          roomId: activeRoomId,
+          content: fileData.fileName, // Use filename as content for file messages
+          messageType,
+          fileName: fileData.fileName,
+          fileUrl: fileData.fileUrl,
+          fileSize: fileData.fileSize,
+          mimeType: fileData.mimeType,
+        });
+      } else if (activeDirectMessageUserId) {
+        await sendDirectMessageMutation.mutateAsync({
+          userId: activeDirectMessageUserId,
+          content: fileData.fileName,
+          messageType,
+          fileName: fileData.fileName,
+          fileUrl: fileData.fileUrl,
+          fileSize: fileData.fileSize,
+          mimeType: fileData.mimeType,
+        });
+      }
+    } catch (error) {
+      console.error("Failed to send file:", error);
     }
   };
 
@@ -191,10 +223,11 @@ export function ChatArea({
               </Button>
             </div>
           </div>
-          <div className="flex space-x-2">
-            <Button type="button" size="sm" variant="ghost">
-              <Paperclip className="w-4 h-4" />
-            </Button>
+          <div className="flex items-center space-x-2">
+            <FileUpload
+              onFileSelect={handleFileSelect}
+              disabled={sendMessageMutation.isPending || sendDirectMessageMutation.isPending}
+            />
             <Button
               type="submit"
               className="bg-gradient-to-r from-primary to-secondary hover:opacity-90"

@@ -1,4 +1,5 @@
 import type { Message } from "@/hooks/use-chat";
+import { MessageAttachment } from "./message-attachment";
 
 interface MessageBubbleProps {
   message: Message;
@@ -44,7 +45,24 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
             <span className="font-medium text-foreground">You</span>
           </div>
           <div className="message-bubble message-bubble-outgoing">
-            <p className="text-primary-foreground">{message.content}</p>
+            {message.messageType === 'text' ? (
+              <p className="text-primary-foreground">{message.content}</p>
+            ) : (
+              <div className="space-y-2">
+                {message.content && (
+                  <p className="text-primary-foreground">{message.content}</p>
+                )}
+                {message.fileUrl && (
+                  <MessageAttachment
+                    fileName={message.fileName || 'Unknown file'}
+                    fileUrl={message.fileUrl}
+                    fileSize={message.fileSize || 0}
+                    mimeType={message.mimeType || 'application/octet-stream'}
+                    messageType={message.messageType}
+                  />
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -74,7 +92,24 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
           </span>
         </div>
         <div className="message-bubble message-bubble-incoming">
-          <p className="text-card-foreground">{message.content}</p>
+          {message.messageType === 'text' ? (
+            <p className="text-card-foreground">{message.content}</p>
+          ) : (
+            <div className="space-y-2">
+              {message.content && (
+                <p className="text-card-foreground">{message.content}</p>
+              )}
+              {message.fileUrl && (
+                <MessageAttachment
+                  fileName={message.fileName || 'Unknown file'}
+                  fileUrl={message.fileUrl}
+                  fileSize={message.fileSize || 0}
+                  mimeType={message.mimeType || 'application/octet-stream'}
+                  messageType={message.messageType}
+                />
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

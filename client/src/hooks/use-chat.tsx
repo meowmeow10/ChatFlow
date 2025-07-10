@@ -20,6 +20,10 @@ export interface Message {
   roomId?: number;
   recipientId?: number;
   messageType: string;
+  fileName?: string;
+  fileUrl?: string;
+  fileSize?: number;
+  mimeType?: string;
   createdAt: string;
   sender: {
     id: number;
@@ -120,13 +124,28 @@ export function useSendMessage() {
   return useMutation({
     mutationFn: async ({ 
       roomId, 
-      content 
+      content,
+      messageType = 'text',
+      fileName,
+      fileUrl,
+      fileSize,
+      mimeType
     }: { 
       roomId: number; 
-      content: string; 
+      content: string;
+      messageType?: string;
+      fileName?: string;
+      fileUrl?: string;
+      fileSize?: number;
+      mimeType?: string;
     }) => {
       const response = await apiRequest("POST", `/api/rooms/${roomId}/messages`, {
         content,
+        messageType,
+        fileName,
+        fileUrl,
+        fileSize,
+        mimeType,
       });
       return await response.json();
     },
@@ -146,13 +165,28 @@ export function useSendDirectMessage() {
   return useMutation({
     mutationFn: async ({ 
       userId, 
-      content 
+      content,
+      messageType = 'text',
+      fileName,
+      fileUrl,
+      fileSize,
+      mimeType
     }: { 
       userId: number; 
-      content: string; 
+      content: string;
+      messageType?: string;
+      fileName?: string;
+      fileUrl?: string;
+      fileSize?: number;
+      mimeType?: string;
     }) => {
       const response = await apiRequest("POST", `/api/direct/${userId}/messages`, {
         content,
+        messageType,
+        fileName,
+        fileUrl,
+        fileSize,
+        mimeType,
       });
       return await response.json();
     },
