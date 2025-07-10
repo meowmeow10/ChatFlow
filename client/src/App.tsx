@@ -9,6 +9,7 @@ import Login from "@/pages/login";
 import Register from "@/pages/register";
 import Chat from "@/pages/chat";
 import NotFound from "@/pages/not-found";
+import { useEffect } from "react";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -66,6 +67,11 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => {
+    // Apply dark mode by default
+    document.documentElement.classList.add("dark");
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

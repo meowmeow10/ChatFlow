@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -32,11 +32,16 @@ interface SettingsModalProps {
 export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   const { user, updateUser } = useAuth();
   const { toast } = useToast();
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const [soundNotifications, setSoundNotifications] = useState(true);
   const [showOnlineStatus, setShowOnlineStatus] = useState(true);
   const [profilePictureUrl, setProfilePictureUrl] = useState(user?.profilePicture || "");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Apply dark mode by default on component mount
+  useEffect(() => {
+    document.documentElement.classList.add("dark");
+  }, []);
 
   const form = useForm<SettingsForm>({
     resolver: zodResolver(settingsSchema),
