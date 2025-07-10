@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Plus, Settings, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
-import { useRooms, useFriends, useRecentChats } from "@/hooks/use-chat";
+import { useRooms, useFriends, useRecentChats, useFriendRequests } from "@/hooks/use-chat";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Settings, LogOut, Hash, Lock, UserPlus, Bell } from "lucide-react";
+import { AddBuddyModal } from "@/components/modals/add-buddy-modal";
+import { BuddyRequestsModal } from "@/components/modals/buddy-requests-modal";
 import type { Room } from "@/hooks/use-chat";
 
 interface SidebarProps {
@@ -33,6 +34,9 @@ export function Sidebar({
   const { data: rooms, isLoading: roomsLoading } = useRooms();
   const { data: friends, isLoading: friendsLoading } = useFriends();
   const { data: recentChats, isLoading: chatsLoading } = useRecentChats();
+  const { data: friendRequests, isLoading: friendRequestsLoading } = useFriendRequests();
+  const [showAddBuddyModal, setShowAddBuddyModal] = useState(false);
+  const [showBuddyRequestsModal, setShowBuddyRequestsModal] = useState(false);
 
   const getInitials = (name: string) => {
     return name
@@ -315,6 +319,34 @@ export function Sidebar({
                 <Plus className="w-4 h-4" />
               </Button>
             )}
+            {currentView === "buddies" && (
+              <div className="flex items-center space-x-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowAddBuddyModal(true)}
+                  className="p-1"
+                >
+                  <UserPlus className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowBuddyRequestsModal(true)}
+                  className="p-1 relative"
+                >
+                  <Bell className="w-4 h-4" />
+                  {friendRequests && friendRequests.length > 0 && (
+                    <Badge
+                      variant="destructive"
+                      className="absolute top-0 right-0 text-xs -translate-y-1/2 translate-x-1/2"
+                    >
+                      {friendRequests.length}
+                    </Badge>
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
 
           {currentView === "rooms" && renderRooms()}
@@ -322,6 +354,15 @@ export function Sidebar({
           {currentView === "buddies" && renderBuddies()}
         </div>
       </div>
+
+      <AddBuddyModal
+        open={showAddBuddyModal}
+        onOpenChange={setShowAddBuddyModal}
+      />
+      <BuddyRequestsModal
+        open={showBuddyRequestsModal}
+        onOpenChange={setShowBuddyRequestsModal}
+      />
     </>
   );
 }

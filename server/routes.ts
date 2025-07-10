@@ -516,6 +516,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User search endpoint
+  app.get("/api/users/search", authenticateToken, async (req: any, res) => {
+    try {
+      const { email } = req.query;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email parameter is required" });
+      }
+
+      const user = await storage.getUserByEmail(email as string);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Don't return sensitive information
+      res.json({
+        id: user.id,
+        displayName: user.displayName,
+        profilePicture: user.profilePicture,
+        status: user.status,
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to search user" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
