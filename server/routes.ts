@@ -395,6 +395,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Edit message
+  app.put("/api/messages/:id", authenticateToken, async (req: any, res) => {
+    try {
+      const messageId = parseInt(req.params.id);
+      const { content } = req.body;
+
+      if (!content || !content.trim()) {
+        return res.status(400).json({ message: "Message content is required" });
+      }
+
+      // Check if user owns the message
+      const message = await storage.getMessageById(messageId);
+      if (!message) {
+        return res.status(404).json({ message: "Message not found" });
+      }
+
+      if (message.senderId !== req.userId) {
+        return res.status(403).json({ message: "You can only edit your own messages" });
+      }
+
+      if (message.isDeleted) {
+        return res.status(400).json({ message: "Cannot edit deleted message" });
+      }
+
+      const updatedMessage = await storage.editMessage(messageId, content);
+      res.json(updatedMessage);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to edit message" });
+    }
+  });
+
+  // Delete message
+  app.delete("/api/messages/:id", authenticateToken, async (req: any, res) => {
+    try {
+      const messageId = parseInt(req.params.id);
+
+      // Check if user owns the message
+      const message = await storage.getMessageById(messageId);
+      if (!message) {
+        return res.status(404).json({ message: "Message not found" });
+      }
+
+      if (message.senderId !== req.userId) {
+        return res.status(403).json({ message: "You can only delete your own messages" });
+      }
+
+      if (message.isDeleted) {
+        return res.status(400).json({ message: "Message already deleted" });
+      }
+
+      await storage.deleteMessage(messageId);
+      res.json({ message: "Message deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete message" });
+    }
+  });
+
   // Recent chats
   app.get("/api/chats", authenticateToken, async (req: any, res) => {
     try {

@@ -15,7 +15,7 @@ import {
   type InsertFriendship
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, sql } from "drizzle-orm";
+import { eq, and, or, desc, sql, isNull } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -31,7 +31,7 @@ export interface IStorage {
   getUserRooms(userId: number): Promise<(Room & { lastMessage?: Message; unreadCount: number })[]>;
   getRoomByInviteCode(inviteCode: string): Promise<Room | undefined>;
   generateInviteCode(roomId: number): Promise<string>;
-  
+
   // Room membership
   addRoomMember(roomId: number, userId: number, role?: string): Promise<RoomMember>;
   removeRoomMember(roomId: number, userId: number): Promise<void>;
@@ -43,6 +43,9 @@ export interface IStorage {
   getRoomMessages(roomId: number, limit?: number): Promise<(Message & { sender: User })[]>;
   getDirectMessages(userId1: number, userId2: number, limit?: number): Promise<(Message & { sender: User })[]>;
   getRecentChats(userId: number): Promise<any[]>;
+  getMessageById(id: number): Promise<Message | undefined>;
+  editMessage(id: number, content: string): Promise<Message | undefined>;
+  deleteMessage(id: number): Promise<void>;
 
   // Friendship operations
   createFriendRequest(requesterId: number, addresseeId: number): Promise<Friendship>;
@@ -93,10 +96,10 @@ export class DatabaseStorage implements IStorage {
       .insert(rooms)
       .values({ ...room, createdBy: creatorId, inviteCode })
       .returning();
-    
+
     // Add creator as admin
     await this.addRoomMember(newRoom.id, creatorId, "admin");
-    
+
     return newRoom;
   }
 
@@ -188,7 +191,7 @@ export class DatabaseStorage implements IStorage {
     return newMessage;
   }
 
-  async getRoomMessages(roomId: number, limit: number = 50): Promise<(Message & { sender: User })[]> {
+  async getRoomMessages(roomId: number, limit?: number): Promise<(Message & { sender: User })[]> {
     const roomMessages = await db
       .select({
         message: messages,
@@ -206,7 +209,7 @@ export class DatabaseStorage implements IStorage {
     })).reverse();
   }
 
-  async getDirectMessages(userId1: number, userId2: number, limit: number = 50): Promise<(Message & { sender: User })[]> {
+  async getDirectMessages(userId1: number, userId2: number, limit?: number): Promise<(Message & { sender: User })[]> {
     const directMessages = await db
       .select({
         message: messages,
@@ -306,6 +309,40 @@ export class DatabaseStorage implements IStorage {
       ...row.friendship,
       requester: row.requester!,
     }));
+  }
+
+  async deleteMessage(id: number): Promise<void> {
+    await db
+      .update(messages)
+      .set({ 
+        isDeleted: true,
+        content: "This message was deleted",
+        editedAt: new Date()
+      })
+      .where(eq(messages.id, id));
+  }
+
+  async editMessage(id: number, content: string) {
+    const [updatedMessage] = await db
+      .update(messages)
+      .set({ 
+        content,
+        isEdited: true,
+        editedAt: new Date()
+      })
+      .where(eq(messages.id, id))
+      .returning();
+
+    return updatedMessage;
+  }
+
+  async getMessageById(id: number) {
+    const [message] = await db
+      .select()
+      .from(messages)
+      .where(eq(messages.id, id));
+
+    return message;
   }
 }
 

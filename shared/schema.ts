@@ -44,6 +44,9 @@ export const messages = pgTable("messages", {
   fileUrl: text("file_url"), // URL or data URL for file/image
   fileSize: integer("file_size"), // file size in bytes
   mimeType: text("mime_type"), // MIME type of the file
+  isEdited: boolean("is_edited").notNull().default(false),
+  isDeleted: boolean("is_deleted").notNull().default(false),
+  editedAt: timestamp("edited_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

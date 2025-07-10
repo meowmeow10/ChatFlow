@@ -24,6 +24,9 @@ export interface Message {
   fileUrl?: string;
   fileSize?: number;
   mimeType?: string;
+  isEdited: boolean;
+  isDeleted: boolean;
+  editedAt?: string;
   createdAt: string;
   sender: {
     id: number;
@@ -199,6 +202,40 @@ export function useSendDirectMessage() {
   });
 }
 
+export function useEditMessage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { messageId: number; content: string }) => {
+      const response = await apiRequest("PUT", `/api/messages/${data.messageId}`, { content: data.content });
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rooms", null, "messages"] }); // Invalidate room messages
+      queryClient.invalidateQueries({ queryKey: ["/api/direct", null, "messages"] }); // Invalidate direct messages
+      queryClient.invalidateQueries({ queryKey: ["/api/chats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/rooms"] });
+    },
+  });
+}
+
+export function useDeleteMessage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (messageId: number) => {
+      const response = await apiRequest("DELETE", `/api/messages/${messageId}`);
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rooms", null, "messages"] }); // Invalidate room messages
+      queryClient.invalidateQueries({ queryKey: ["/api/direct", null, "messages"] }); // Invalidate direct messages
+      queryClient.invalidateQueries({ queryKey: ["/api/chats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/rooms"] });
+    },
+  });
+}
+
 export function useJoinRoom() {
   const queryClient = useQueryClient();
 
@@ -224,7 +261,7 @@ export function useGenerateInvite() {
 
 export function useAddRoomMember() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ roomId, email }: { roomId: number; email: string }) => {
       const response = await apiRequest("POST", `/api/rooms/${roomId}/members`, { email });
