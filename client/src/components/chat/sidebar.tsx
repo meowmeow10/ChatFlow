@@ -192,9 +192,17 @@ export function Sidebar({
           >
             <div className="flex items-center space-x-3">
               <div className="relative">
-                <div className="w-8 h-8 avatar-gradient text-sm font-medium">
-                  {getInitials(friend.displayName)}
-                </div>
+                {friend.profilePicture ? (
+                  <img 
+                    src={friend.profilePicture} 
+                    alt="Profile" 
+                    className="w-8 h-8 rounded-full object-cover border border-border"
+                  />
+                ) : (
+                  <div className="w-8 h-8 avatar-gradient text-sm font-medium">
+                    {getInitials(friend.displayName)}
+                  </div>
+                )}
                 <span 
                   className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(friend.status)}`}
                 />
@@ -215,9 +223,17 @@ export function Sidebar({
       {/* User Profile Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 avatar-gradient">
-            {user?.displayName && getInitials(user.displayName)}
-          </div>
+          {user?.profilePicture ? (
+            <img 
+              src={user.profilePicture} 
+              alt="Profile" 
+              className="w-10 h-10 rounded-full object-cover border-2 border-border"
+            />
+          ) : (
+            <div className="w-10 h-10 avatar-gradient">
+              {user?.displayName && getInitials(user.displayName)}
+            </div>
+          )}
           <div className="flex-1">
             <h3 className="font-medium text-foreground">{user?.displayName}</h3>
             <p className="text-sm text-emerald-500 flex items-center">

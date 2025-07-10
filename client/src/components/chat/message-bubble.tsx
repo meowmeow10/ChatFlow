@@ -25,9 +25,17 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
   if (isOwn) {
     return (
       <div className="flex items-start space-x-3 flex-row-reverse">
-        <div className="w-10 h-10 avatar-gradient">
-          {getInitials(message.sender.displayName)}
-        </div>
+        {message.sender.profilePicture ? (
+          <img 
+            src={message.sender.profilePicture} 
+            alt="Profile" 
+            className="w-10 h-10 rounded-full object-cover border border-border"
+          />
+        ) : (
+          <div className="w-10 h-10 avatar-gradient">
+            {getInitials(message.sender.displayName)}
+          </div>
+        )}
         <div className="flex-1 max-w-lg">
           <div className="flex items-center space-x-2 mb-1 justify-end">
             <span className="text-xs text-muted-foreground">

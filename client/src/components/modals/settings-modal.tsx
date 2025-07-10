@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Camera } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 const settingsSchema = z.object({
   displayName: z.string().min(1, "Display name is required"),
   statusMessage: z.string().optional(),
+  profilePicture: z.string().optional(),
 });
 
 type SettingsForm = z.infer<typeof settingsSchema>;
@@ -33,12 +35,15 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [soundNotifications, setSoundNotifications] = useState(true);
   const [showOnlineStatus, setShowOnlineStatus] = useState(true);
+  const [profilePictureUrl, setProfilePictureUrl] = useState(user?.profilePicture || "");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<SettingsForm>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
       displayName: user?.displayName || "",
       statusMessage: user?.statusMessage || "",
+      profilePicture: user?.profilePicture || "",
     },
   });
 
@@ -51,9 +56,28 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       .slice(0, 2);
   };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // For this demo, we'll use a data URL
+      // In production, you'd upload to a CDN/storage service
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        setProfilePictureUrl(dataUrl);
+        form.setValue('profilePicture', dataUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const onSubmit = async (data: SettingsForm) => {
     try {
-      await updateUser(data);
+      const updateData = {
+        ...data,
+        profilePicture: profilePictureUrl || data.profilePicture,
+      };
+      await updateUser(updateData);
       toast({
         title: "Settings updated!",
         description: "Your profile has been updated successfully.",
@@ -85,12 +109,55 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
           <div>
             <h4 className="font-medium text-foreground mb-4">Profile</h4>
             <div className="flex items-center space-x-4 mb-4">
-              <div className="w-16 h-16 avatar-gradient text-xl font-bold">
-                {user?.displayName && getInitials(user.displayName)}
+              <div className="relative">
+                {profilePictureUrl || user?.profilePicture ? (
+                  <img 
+                    src={profilePictureUrl || user?.profilePicture} 
+                    alt="Profile" 
+                    className="w-16 h-16 rounded-full object-cover border-2 border-border"
+                  />
+                ) : (
+                  <div className="w-16 h-16 avatar-gradient text-xl font-bold">
+                    {user?.displayName && getInitials(user.displayName)}
+                  </div>
+                )}
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="absolute -bottom-1 -right-1 p-1 rounded-full"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Camera className="w-3 h-3" />
+                </Button>
               </div>
-              <Button variant="outline">
-                Change Picture
-              </Button>
+              <div>
+                <Button 
+                  variant="outline" 
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Change Picture
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                {(profilePictureUrl || user?.profilePicture) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setProfilePictureUrl("");
+                      form.setValue('profilePicture', '');
+                    }}
+                    className="ml-2 text-muted-foreground"
+                  >
+                    Remove
+                  </Button>
+                )}
+              </div>
             </div>
             
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
