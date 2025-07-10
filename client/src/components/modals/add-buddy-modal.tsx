@@ -8,11 +8,11 @@ import { useSendFriendRequest } from "@/hooks/use-chat";
 import { useToast } from "@/hooks/use-toast";
 
 interface AddBuddyModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function AddBuddyModal({ isOpen, onClose }: AddBuddyModalProps) {
+export function AddBuddyModal({ open, onOpenChange }: AddBuddyModalProps) {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -54,7 +54,7 @@ export function AddBuddyModal({ isOpen, onClose }: AddBuddyModalProps) {
       });
       
       setEmail("");
-      onClose();
+      onOpenChange(false);
     } catch (error) {
       toast({
         title: "Error",
@@ -66,8 +66,10 @@ export function AddBuddyModal({ isOpen, onClose }: AddBuddyModalProps) {
     }
   };
 
+  const handleClose = () => onOpenChange(false);
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add New Buddy</DialogTitle>
@@ -85,7 +87,7 @@ export function AddBuddyModal({ isOpen, onClose }: AddBuddyModalProps) {
             />
           </div>
           <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading}>

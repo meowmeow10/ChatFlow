@@ -7,11 +7,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Check, X, User } from "lucide-react";
 
 interface BuddyRequestsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function BuddyRequestsModal({ isOpen, onClose }: BuddyRequestsModalProps) {
+export function BuddyRequestsModal({ open, onOpenChange }: BuddyRequestsModalProps) {
   const { data: friendRequests, isLoading } = useFriendRequests();
   const acceptRequest = useAcceptFriendRequest();
   const rejectRequest = useRejectFriendRequest();
@@ -59,7 +59,7 @@ export function BuddyRequestsModal({ isOpen, onClose }: BuddyRequestsModalProps)
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
