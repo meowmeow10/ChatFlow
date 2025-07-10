@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { dmSound, friendRequestSound } from "@/lib/notifications";
 
 export interface Room {
   id: number;
@@ -71,21 +72,53 @@ export function useRoomMembers(roomId: number | null) {
 }
 
 export function useRoomMessages(roomId: number | null) {
+  const previousMessageCount = useRef<number>(0);
+  
   const query = useQuery({
     queryKey: ["/api/rooms", roomId, "messages"],
     enabled: !!roomId,
     refetchInterval: 2000, // Poll every 2 seconds for new messages
   });
 
+  useEffect(() => {
+    if (query.data && Array.isArray(query.data)) {
+      const currentMessageCount = query.data.length;
+      
+      // Play sound if new messages arrived (but not on initial load)
+      if (previousMessageCount.current > 0 && currentMessageCount > previousMessageCount.current) {
+        dmSound.play();
+      }
+      
+      previousMessageCount.current = currentMessageCount;
+    }
+  }, [query.data]);
+
   return query;
 }
 
 export function useDirectMessages(userId: number | null) {
-  return useQuery({
+  const previousMessageCount = useRef<number>(0);
+  
+  const query = useQuery({
     queryKey: ["/api/direct", userId, "messages"],
     enabled: !!userId,
     refetchInterval: 2000,
   });
+
+  useEffect(() => {
+    if (query.data && Array.isArray(query.data)) {
+      const currentMessageCount = query.data.length;
+      
+      // Play sound if new messages arrived (but not on initial load)
+      if (previousMessageCount.current > 0 && currentMessageCount > previousMessageCount.current) {
+        dmSound.play();
+      }
+      
+      previousMessageCount.current = currentMessageCount;
+    }
+  }, [query.data]);
+
+  return query;
 }
 
 export function useRecentChats() {
@@ -102,9 +135,26 @@ export function useFriends() {
 }
 
 export function useFriendRequests() {
-  return useQuery({
+  const previousRequestCount = useRef<number>(0);
+  
+  const query = useQuery({
     queryKey: ["/api/friends/requests"],
   });
+
+  useEffect(() => {
+    if (query.data && Array.isArray(query.data)) {
+      const currentRequestCount = query.data.length;
+      
+      // Play sound if new friend requests arrived (but not on initial load)
+      if (previousRequestCount.current > 0 && currentRequestCount > previousRequestCount.current) {
+        friendRequestSound.play();
+      }
+      
+      previousRequestCount.current = currentRequestCount;
+    }
+  }, [query.data]);
+
+  return query;
 }
 
 export function useCreateRoom() {
