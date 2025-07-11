@@ -8,6 +8,16 @@ import { z } from "zod";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
+registerRoutes(app)
+.then((server) => {
+  server.listen(5000, () => {
+    console.log("Server is running! UwU!");
+  });
+})
+.catch((error) => {
+  console.error("Failed to start server OwO:", error);
+});
+
 // Middleware to verify JWT token
 const authenticateToken = async (req: any, res: any, next: any) => {
   const authHeader = req.headers.authorization;
