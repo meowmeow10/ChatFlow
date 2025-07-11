@@ -42,7 +42,7 @@ export default function Register() {
       await registerUser(data.email, data.password, data.displayName);
       setLocation("/");
       toast({
-        title: "Welcome to ChatFlow!",
+        title: "Welcome to BlinkIM!",
         description: "Your account has been created successfully.",
       });
     } catch (error: any) {
@@ -63,7 +63,7 @@ export default function Register() {
               <UserPlus className="w-8 h-8" />
             </div>
             <h1 className="text-2xl font-bold text-foreground">Create Account</h1>
-            <p className="text-muted-foreground mt-2">Join the ChatFlow community</p>
+            <p className="text-muted-foreground mt-2">Join the BlinkIM community</p>
           </div>
 
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">

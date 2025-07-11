@@ -2,7 +2,7 @@
 
 ## Overview
 
-ChatFlow is a real-time chat application built with a modern full-stack TypeScript architecture. It features room-based messaging, direct messages, friend management, and user authentication. The application uses a monorepo structure with shared schemas and types between the client and server.
+BlinkIM is a real-time chat application built with a modern full-stack TypeScript architecture. It features room-based messaging, direct messages, friend management, and user authentication. The application uses a monorepo structure with shared schemas and types between the client and server.
 
 ## User Preferences
 

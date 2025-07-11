@@ -56,7 +56,7 @@ export default function Login() {
             <div className="w-16 h-16 avatar-gradient mx-auto mb-4">
               <MessageCircle className="w-8 h-8" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">Welcome to ChatFlow</h1>
+            <h1 className="text-2xl font-bold text-foreground">Welcome to BlinkIM</h1>
             <p className="text-muted-foreground mt-2">Sign in to continue messaging</p>
           </div>
 
