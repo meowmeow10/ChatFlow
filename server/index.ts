@@ -1,61 +1,116 @@
-import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import express, { type Express, Request, Response } from "express";
+import { createServer, type Server } from "http";
+import { storage } from "./storage";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import { insertUserSchema, insertRoomSchema, insertMessageSchema } from "@shared/schema";
+import { z } from "zod";
 
-const app = express();
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: false }));
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
-app.use((req, res, next) => {
-  const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
+// Middleware to verify JWT token
+const authenticateToken = async (req: any, res: any, next: any) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(" ")[1];
 
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
+  if (!token) {
+    return res.status(401).json({ message: "Access token required" });
+  }
 
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: number };
+    req.userId = decoded.userId;
+
+    // Update user status to online
+    await storage.updateUserStatus(decoded.userId, "online");
+
+    next();
+  } catch (error) {
+    console.error("Invalid token:", error);  // Log token errors
+    return res.status(403).json({ message: "Invalid or expired token" });
+  }
+};
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Authentication routes
+  app.post("/api/auth/register", async (req: Request, res: Response) => {
+    try {
+      console.log("Register attempt with data:", req.body);
+      const userData = insertUserSchema.parse(req.body);
+
+      const existingUser = await storage.getUserByEmail(userData.email);
+      if (existingUser) {
+        return res.status(400).json({ message: "User already exists" });
       }
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
+
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      const user = await storage.createUser({
+        ...userData,
+        password: hashedPassword,
+        status: "online",
+      });
+
+      const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "7d" });
+
+      res.status(201).json({
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          displayName: user.displayName,
+          profilePicture: user.profilePicture,
+          status: user.status,
+        },
+      });
+    } catch (error) {
+      console.error("Registration error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
       }
-      log(logLine);
+      res.status(500).json({ message: "Registration failed" });
     }
   });
 
-  next();
-});
+  app.post("/api/auth/login", async (req: Request, res: Response) => {
+    try {
+      console.log("Login attempt with data:", req.body);
+      const { email, password } = req.body;
 
-(async () => {
-  const server = await registerRoutes(app);
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password required" });
+      }
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-    console.error(err.stack);
-    res.status(status).json({ message });
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      const validPassword = await bcrypt.compare(password, user.password);
+      if (!validPassword) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      await storage.updateUserStatus(user.id, "online");
+
+      const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: "7d" });
+
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          displayName: user.displayName,
+          profilePicture: user.profilePicture,
+          status: user.status,
+        },
+      });
+    } catch (error) {
+      console.error("Login error:", error);  // Log login errors
+      res.status(500).json({ message: "Login failed" });
+    }
   });
 
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
-
-  const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
-})();
+  // Further routes...
+  const httpServer = createServer(app);
+  return httpServer;
+}
