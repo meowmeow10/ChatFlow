@@ -50,6 +50,12 @@ export class AuthService {
       password,
     });
 
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Login error:', errorText);
+      throw new Error('Login failed: ' + errorText);
+    }
+
     const data: AuthResponse = await response.json();
     this.token = data.token;
     localStorage.setItem(TOKEN_KEY, this.token);
@@ -68,6 +74,12 @@ export class AuthService {
       password,
       displayName,
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Registration error:', errorText);
+      throw new Error('Registration failed: ' + errorText);
+    }
 
     const data: AuthResponse = await response.json();
     this.token = data.token;
