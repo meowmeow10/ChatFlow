@@ -8,6 +8,9 @@ import { z } from "zod";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
+const app = express();
+app.use(express.json());
+
 registerRoutes(app)
 .then((server) => {
   server.listen(5000, () => {
